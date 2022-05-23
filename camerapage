@@ -1,0 +1,209 @@
+// // ignore_for_file: avoid_print, prefer_typing_uninitialized_variables
+
+// import 'dart:convert';
+// import 'dart:io';
+
+// import 'package:camera/camera.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:flutter/material.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+
+// class CameraScreenPage extends StatefulWidget {
+//   final String tipo;
+//   const CameraScreenPage({Key? key, required this.tipo}) : super(key: key);
+
+//   @override
+//   _CameraScreenPageState createState() => _CameraScreenPageState();
+// }
+
+// class _CameraScreenPageState extends State<CameraScreenPage> {
+//   List<CameraDescription> cameras = [];
+//   CameraController? controller;
+//   XFile? imagem;
+//   Size? size;
+//   final FirebaseStorage storage = FirebaseStorage.instance;
+//   var prefs;
+//   @override
+//   void initState() {
+//     super.initState();
+//     _loadCameras();
+//     _requestPermission();
+//     _prefServices();
+//   }
+
+//   _prefServices() async {
+//     SharedPreferences jsonResult = await SharedPreferences.getInstance();
+//     var result = jsonResult.getString('cadastro');
+//     prefs = jsonDecode(result!);
+//     print(prefs['key']);
+//   }
+
+//   @override
+//   void dispose() {
+//     controller?.dispose();
+//     super.dispose();
+//   }
+
+//   _requestPermission() async {
+//     return await [
+//       Permission.storage,
+//     ].request();
+//   }
+
+//   _loadCameras() async {
+//     try {
+//       cameras = await availableCameras();
+//       _startCamera();
+//     } on CameraException catch (e) {
+//       return (e.description);
+//     }
+//   }
+
+//   _startCamera() {
+//     if (cameras.isEmpty) {
+//       print('Câmera não foi encontrada');
+//     } else {
+//       if (widget.tipo == 'frente') {
+//         _previewCamera(cameras[0]);
+//       } else if (widget.tipo == 'verso') {
+//         _previewCamera(cameras[0]);
+//       } else {
+//         _previewCamera(cameras[1]);
+//       }
+//     }
+//   }
+
+//   _previewCamera(CameraDescription camera) async {
+//     final CameraController cameraController = CameraController(
+//       camera,
+//       ResolutionPreset.high,
+//       enableAudio: false,
+//       imageFormatGroup: ImageFormatGroup.jpeg,
+//     );
+//     controller = cameraController;
+
+//     try {
+//       await cameraController.initialize();
+//     } on CameraException catch (e) {
+//       print(e.description);
+//     }
+
+//     if (mounted) {
+//       setState(() {});
+//     }
+//   }
+
+//   // @override
+//   // Widget build(BuildContext context) {
+//   //   size = MediaQuery.of(context).size;
+//   //   return Scaffold(
+//   //     appBar: AppBar(
+//   //       title: const Text('Documento Oficial'),
+//   //       backgroundColor: Colors.grey[900],
+//   //       centerTitle: true,
+//   //       elevation: 0,
+//   //     ),
+//   //     body: Container(
+//   //       color: Colors.grey[900],
+//   //       child: Center(
+//   //         child: _arquivoWidget(),
+//   //       ),
+//   //     ),
+//   //     floatingActionButton: (imagem != null)
+//   //         ? FloatingActionButton.extended(
+//   //             onPressed: () async {
+//   //               _save(imagem!, '').then(Navigator.pop(context));
+//   //               await controller!.dispose();
+//   //             },
+//   //             label: const Text('Enviar Foto'),
+//   //           )
+//   //         : null,
+//   //     floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+//   //   );
+//   // }
+
+//   // _arquivoWidget() {
+//   //   return SizedBox(
+//   //     width: size!.width - 50,
+//   //     height: size!.height - (size!.height / 3),
+//   //     child: imagem == null
+//   //         ? _cameraPreviewWidget()
+//   //         : Image.file(
+//   //             File(imagem!.path),
+//   //             fit: BoxFit.contain,
+//   //           ),
+//   //   );
+//   // }
+
+//   // _cameraPreviewWidget() {
+//   //   final CameraController? cameraController = controller;
+//   //   print('CAmera preview');
+//   //   if (cameraController == null || !cameraController.value.isInitialized) {
+//   //     return const Text('Widget para Câmera que não está disponível');
+//   //   } else {
+//   //     return Stack(
+//   //       alignment: AlignmentDirectional.bottomCenter,
+//   //       children: [
+//   //         CameraPreview(controller!),
+//   //         _botaoCapturaWidget(),
+//   //       ],
+//   //     );
+//   //   }
+//   // }
+
+//   _save(XFile image, String tipo) async {
+//     SharedPreferences jsonResult = await SharedPreferences.getInstance();
+//     var result = jsonResult.getString('cadastro');
+//     prefs = jsonDecode(result!);
+
+//     print(prefs);
+
+//     File file1 = File(image.path);
+//     String ref = prefs['key'];
+//     if (widget.tipo == 'frente') {
+//       ref = ref + widget.tipo;
+//     } else if (widget.tipo == 'verso') {
+//       ref = ref + widget.tipo;
+//     } else {
+//       ref = ref + widget.tipo;
+//     }
+//     return storage.ref(ref.toString()).putFile(file1);
+//   }
+
+//   // _botaoCapturaWidget() {
+//   //   return Padding(
+//   //     padding: const EdgeInsets.only(bottom: 24),
+//   //     child: CircleAvatar(
+//   //       radius: 32,
+//   //       backgroundColor: Colors.black.withOpacity(0.5),
+//   //       child: IconButton(
+//   //         icon: const Icon(
+//   //           Icons.camera_alt,
+//   //           color: Colors.white,
+//   //           size: 30,
+//   //         ),
+//   //         onPressed: tirarFoto,
+//   //       ),
+//   //     ),
+//   //   );
+//   // }
+
+//   // tirarFoto() async {
+//   //   final CameraController? cameraController = controller;
+
+//   //   if (cameraController != null && cameraController.value.isInitialized) {
+//   //     try {
+//   //       XFile file = await cameraController.takePicture();
+//   //       print(file.path);
+//   //       if (mounted) {
+//   //         setState(() {
+//   //           imagem = file;
+//   //         });
+//   //       }
+//   //     } on CameraException catch (e) {
+//   //       print(e.description);
+//   //     }
+//   //   }
+//   // }
+// }
